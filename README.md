@@ -1,6 +1,6 @@
 # Multiplication in big fields with fast lookup tables
 
-All ideas credited to [Axiom](https://hackmd.io/@axiom).
+All ideas credited to [Axiom](https://github.com/axiom-crypto).
 
 Here we suggest an implementation of multiplication in a large field, under the assumption that lookup tables work very fast.
 
