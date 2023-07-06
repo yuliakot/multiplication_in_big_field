@@ -2,7 +2,6 @@ use super::* ;
 
 struct FLGateChip<F>(GateChip<F>);
 
-
 impl<F: ScalarField> FLGateChip<F> {
     pub fn crt_lookup_mul(
         &self,
