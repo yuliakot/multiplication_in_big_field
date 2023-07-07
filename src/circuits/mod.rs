@@ -14,6 +14,6 @@ use halo2_base::{
 use halo2_proofs_axiom::dev::MockProver;
 use num_bigint::BigInt;
 
-pub mod utils;
+pub mod mod_p_verifications;
 pub mod crt_lookup;
 pub mod into_crt;
