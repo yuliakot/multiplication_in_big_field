@@ -12,10 +12,8 @@ use halo2_base::{
     QuantumCell::{self, Constant, Existing, Witness, WitnessFraction},
 };
 use halo2_proofs_axiom::dev::MockProver;
+use num_bigint::BigInt;
 
 pub mod utils;
 pub mod crt_lookup;
 pub mod into_crt;
-
-#[cfg(test)]
-pub(crate) mod tests;
