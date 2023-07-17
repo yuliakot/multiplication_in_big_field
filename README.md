@@ -33,11 +33,11 @@ The final check is the tricky one. In the original implementation by Aztec, this
 In reality, all steps are slightly more complicated, since the numbers are too large for the lookup tables.
 
 
-# Strategy 1
+# Strategy
 
 ### Lookup tables to look things up 
 
-Here is a way to perform non-native multiplication using a lookup table: we can find $ab \mod m$ using the  table with $m^2$ rows, whose rows are triples $(a,\; b,\; ab \mod m)$.
+Here is a way to perform non-native multiplication using a lookup table: we can find $ab \mod m$ using the  table with $m^2$ rows, whose rows are triples $(a, b, ab \mod m)$.
 
 Now in order to check that $ab = r \mod m$, we need to check that $(a, b, r)$ is in the lookup table (if $0\le r < m$).
 
