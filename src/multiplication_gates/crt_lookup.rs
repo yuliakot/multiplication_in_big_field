@@ -10,7 +10,7 @@ pub trait FLGateChip<F: ScalarField>{
         a: impl Into<QuantumCell<F>>,
         b: impl Into<QuantumCell<F>>,
         a_times_b: impl Into<QuantumCell<F>>,
-        modulus: impl Into<QuantumCell<F>>,) -> AssignedValue<F>
+        modulus: F,) -> AssignedValue<F>
     {
         // should look something like 
         // let lookup_table = mul_lookup_tables[modulus];
@@ -25,17 +25,16 @@ pub trait FLGateChip<F: ScalarField>{
         a: impl Into<QuantumCell<F>>,
         b: impl Into<QuantumCell<F>>,
         a_plus_b: impl Into<QuantumCell<F>>,
-        modulus: impl Into<QuantumCell<F>>,) -> AssignedValue<F>
-    {
-        
-        unimplemented!()
-        //ctx.get(0)
-    }
+        modulus: F,) -> AssignedValue<F>
+        {
+            unimplemented!()
+        }
 
     fn crt_lookup_division_with_remainder(
         &self,
         ctx: &mut Context<F>,
-        inputs : [impl Into<QuantumCell<F>>; 7],
+        inputs : [impl Into<QuantumCell<F>> + Copy; 6],
+        p: impl Into<QuantumCell<F>>,
         modulus: F,) -> AssignedValue<F>;
 }
 
@@ -46,15 +45,16 @@ impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
         [a,
         b, 
         a_times_b, 
-        p, 
         q, 
         p_times_q, 
-        r] : [impl Into<QuantumCell<F>>; 7],
+        r] : [impl Into<QuantumCell<F>> + Copy; 6],
+        p: impl Into<QuantumCell<F>>,
         modulus: F,) -> AssignedValue<F>
     {
-        //self.crt_lookup_mul(ctx, a, b, a_times_b, modulus);
-        //self.crt_lookup_mul(ctx, p, q, p_times_q, modulus);
-        //self.crt_lookup_add(ctx, p_times_q, r, a_times_b, modulus);
+        self.crt_lookup_mul(ctx, a.into(), b.into(), a_times_b.into(), modulus);
+        self.crt_lookup_mul(ctx, p.into(), q.into(), p_times_q.into(), modulus);
+        self.crt_lookup_add(ctx, p_times_q.into().clone(), r.into(), a_times_b.into().clone(), modulus);
+
         //ctx.get(0)
         unimplemented!()
     }
