@@ -41,7 +41,7 @@
 
 
     fn read_inputs(i: i32) -> [u64; 4]{
-        let path = format!("tests/tests_input{i}.config");
+        let path = format!("tests/tests_input{i}.in");
         serde_json::from_reader(
             File::open(path).unwrap_or_else(|e| panic!("")),
         )
