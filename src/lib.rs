@@ -28,7 +28,7 @@ use halo2_base::{
 };
 use halo2_proofs_axiom::dev::MockProver;
 
-use crate::crt::{CRTint, into_crtint};
+use crate::crt::{CRTint, biguint_into_crtint};
 
 
 fn into_crtint_batch<'a, F:ScalarField>(
@@ -37,12 +37,12 @@ fn into_crtint_batch<'a, F:ScalarField>(
      moduli: &Vec<F>,
      p: &BigUint) -> [CRTint<F>; 6]
  {
-    [into_crtint(a, moduli, p), 
-      into_crtint(b, moduli, p),
-      into_crtint(a_times_b, moduli, p),
-      into_crtint(q, moduli, p),  
-      into_crtint(p_times_q, moduli, p), 
-      into_crtint(r, moduli, p)
+    [biguint_into_crtint(a, moduli, p), 
+    biguint_into_crtint(b, moduli, p),
+    biguint_into_crtint(a_times_b, moduli, p),
+    biguint_into_crtint(q, moduli, p),  
+    biguint_into_crtint(p_times_q, moduli, p), 
+    biguint_into_crtint(r, moduli, p)
      ]
  }
  
