@@ -16,3 +16,6 @@ use halo2_proofs_axiom::dev::MockProver;
 
 pub mod mod_p_verifications;
 pub mod crt_lookup;
+
+#[cfg(test)]
+pub mod tests;

@@ -3,7 +3,7 @@
 
 pub mod multiplication_gates;
 pub mod crt;
-pub mod p_precomputed;
+pub mod moduli_precomuted;
 
 
 use itertools::izip;

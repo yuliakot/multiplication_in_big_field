@@ -48,7 +48,7 @@ For this to work, we would need the number of rows $m^2$ to be at most $2^{28}$,
 First, we chose $M = m_1\cdot \ldots \cdot m_t$ so that
 1. All $m_i$ are relatively prime;
 2. $m_i < 2^{14}$ for all $i$;
-3. $Mn > p^2$.
+3. $Mn > p^2 + p$.
 (I suspect, we want $t \ge 20$).
 
 Now we want to pre-compute lookup tables $(a,\; b,\; ab \mod m_i)$ as above for all $i$, as well as $p_i = p \mod m_i.$
@@ -56,10 +56,14 @@ Now we want to pre-compute lookup tables $(a,\; b,\; ab \mod m_i)$ as above for 
 ## High-level algorithm
 
 1. Find $q$, $r$, such that $ab = qp + r$;
-2. Range check $0 \le ab < M\cdot n$;
-3. Range check $0 \le qp + r < M\cdot n$;
+2. Range check $0 \le ab < M\cdot n$: this is done by checking $0\le a < p$ and $0 \le b < p$;
+3. Range check $0 \le qp + r < M\cdot n$:  this is done by checking $0\le q < p$ and $0 \le r < p$;
 4. Check that $a \cdot b =  q \cdot p + r \mod n$;
 5. $a$, $b$, $q$, $r$ are converted into the CRT form: $a \mapsto (a_1, a_2, \ldots)$ where $a_i = a \mod m_i$;
 6. For each modulus $m_i$, check that $a_i \cdot b_i =  q_i \cdot p_i + r_i \mod m_i$ by using a lookup table.
 
+## Partial reduction
 
+This bit is inspired by [Aztec](https://hackmd.io/@arielg/B13JoihA8) implementation, as well as this [paper](https://eprint.iacr.org/2022/1470.pdf). 
+
+Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; lib\_ bits}$.

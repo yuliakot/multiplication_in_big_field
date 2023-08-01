@@ -2,6 +2,9 @@ use halo2_base::utils::{ScalarField, fe_to_biguint, biguint_to_fe};
 use num_bigint::BigUint;
 use num_integer::Integer;
 
+#[cfg(test)]
+pub mod tests;
+
 pub struct CRTint<F: ScalarField>{
     pub residues: Vec<F>,
     pub value: BigUint,
@@ -20,10 +23,20 @@ fn into_crt<F: ScalarField>(a: &BigUint, moduli: &Vec<F>) -> Vec<F>{
 
 fn biguint_to_limbs<F: ScalarField>(a: &BigUint) -> [F; 2]{
     let mut e = a.iter_u64_digits();
-    let limb0 = e.next().unwrap_or(0) as u128;
-    let limb1 = e.next().unwrap_or(0) as u128;
+    let mut limb0 = e.next().unwrap_or(0) as u128;
+    let limb0_5 = e.next().unwrap_or(0) as u128;
+    
+    limb0 |= ((limb0_5 & ((1u128 << 64) - 1u128)) as u128) << 64u32;
+
+
+    let mut limb1 = e.next().unwrap_or(0) as u128;
+    let limb1_5 = e.next().unwrap_or(0) as u128;
+    
+    limb1 |= ((limb1_5 & ((1u128 << 64) - 1u128)) as u128) << 64u32;
+
     let limb0 = F::from_u128(limb0);
     let limb1 = F::from_u128(limb1);
+    
     [limb0, limb1]
 }
 
