@@ -1,6 +1,7 @@
-use halo2_base::gates::flex_gate::FlexGateConfig;
+use halo2_base::{gates::flex_gate::FlexGateConfig, utils::fe_to_bigint};
 use halo2_proofs_axiom::dev::metadata::Gate;
-use halo2_base::utils::fe_to_biguint;
+use halo2_base::utils::fe_to_biguint ;
+use num_bigint::BigUint;
 
 use super::* ;
 
@@ -16,7 +17,7 @@ pub trait FLGateChip<F: ScalarField>{
             //unimplemented!()
             //returns TRUE always 
             //for testing purposes
-            ctx.assign_region_last([Witness(F::one()), Witness(F::one()), Witness(F::zero()), Witness(F::one())], [])
+            ctx.assign_region_last([Witness(F::one())], [])
             //ctx.get(0)
     }
 
@@ -31,7 +32,7 @@ pub trait FLGateChip<F: ScalarField>{
             //unimplemented!()
             //returns TRUE always 
             //for testing purposes
-            ctx.assign_region_last([Witness(F::zero()), Witness(F::one()), Witness(F::zero()), Witness(F::zero())], [])
+            ctx.assign_region_last([Witness(F::zero())], [])
             //ctx.get(0)
 
         }
@@ -63,7 +64,7 @@ impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
         let res4 = self.and(ctx, res1, res2);
         let res5 = self.and(ctx, res4, res3);
 
-        //println!("\nmodulus = {:?}, \na = {:?}, \nb = {:?}, \np = {:?}, \nq = {:?}, \nr = {:?}", fe_to_biguint(&modulus), fe_to_biguint(&a.value), fe_to_biguint(&b.value), fe_to_biguint(&p.value), fe_to_biguint(&q.value), fe_to_biguint(&r.value));
+        println!("\nmodulus = {:?}, \na = {:?}, \nb = {:?}, \np = {:?}, \nq = {:?}, \nr = {:?}",  fe_to_bigint(&modulus), &a.value,  (&b.value),  (&p.value),  (&q.value),  (&r.value));
         
         res5
     }
