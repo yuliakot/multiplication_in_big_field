@@ -5,6 +5,7 @@ use num_integer::Integer;
 #[cfg(test)]
 pub mod tests;
 
+#[derive(Debug, Clone)]
 pub struct CRTint<F: ScalarField>{
     pub residues: Vec<F>,
     pub value: BigUint,
@@ -51,4 +52,12 @@ pub fn biguint_into_crtint<F:ScalarField>(a: &BigUint, moduli: &Vec<F>, p: &BigU
         residue_mod_n: residue_mod_n,
         limbs_as_fe: limbs,
     }
+}
+
+
+pub fn fe_into_crtint<F:ScalarField>(a: &F, moduli: &Vec<F>, p: &F) -> CRTint<F>
+{
+    let (a, p) = (&fe_to_biguint(a), &fe_to_biguint(p));
+    biguint_into_crtint(a, moduli, p)
+
 }

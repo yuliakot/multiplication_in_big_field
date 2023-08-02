@@ -1,5 +1,6 @@
 use halo2_base::gates::flex_gate::FlexGateConfig;
 use halo2_proofs_axiom::dev::metadata::Gate;
+use halo2_base::utils::fe_to_biguint;
 
 use super::* ;
 
@@ -12,11 +13,11 @@ pub trait FLGateChip<F: ScalarField>{
         a_times_b: impl Into<QuantumCell<F>>,
         modulus: F,) -> AssignedValue<F>
     {
-        // should look something like 
-        // let lookup_table = mul_lookup_tables[modulus];
-        // vec![a, b, a_times_b]        
-        //ctx.get(0)
-        unimplemented!()
+            //unimplemented!()
+            //returns TRUE always 
+            //for testing purposes
+            ctx.assign_region_last([Witness(F::one()), Witness(F::one()), Witness(F::zero()), Witness(F::one())], [])
+            //ctx.get(0)
     }
 
     fn crt_lookup_add(
@@ -27,14 +28,19 @@ pub trait FLGateChip<F: ScalarField>{
         a_plus_b: impl Into<QuantumCell<F>>,
         modulus: F,) -> AssignedValue<F>
         {
-            unimplemented!()
+            //unimplemented!()
+            //returns TRUE always 
+            //for testing purposes
+            ctx.assign_region_last([Witness(F::zero()), Witness(F::one()), Witness(F::zero()), Witness(F::zero())], [])
+            //ctx.get(0)
+
         }
 
     fn crt_lookup_division_with_remainder(
         &self,
         ctx: &mut Context<F>,
         inputs : [impl Into<QuantumCell<F>> + Copy; 6],
-        p: impl Into<QuantumCell<F>>,
+        p: impl Into<QuantumCell<F>> + Copy,
         modulus: F,) -> AssignedValue<F>;
 }
 
@@ -48,14 +54,17 @@ impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
         q, 
         p_times_q, 
         r] : [impl Into<QuantumCell<F>> + Copy; 6],
-        p: impl Into<QuantumCell<F>>,
+        p: impl Into<QuantumCell<F>> + Copy,
         modulus: F,) -> AssignedValue<F>
     {
-        self.crt_lookup_mul(ctx, a.into(), b.into(), a_times_b.into(), modulus);
-        self.crt_lookup_mul(ctx, p.into(), q.into(), p_times_q.into(), modulus);
-        self.crt_lookup_add(ctx, p_times_q.into().clone(), r.into(), a_times_b.into().clone(), modulus);
+        let res1 = self.crt_lookup_mul(ctx, a.into(), b.into(), a_times_b.into(), modulus);
+        let res2 = self.crt_lookup_mul(ctx, p.into(), q.into(), p_times_q.into(), modulus);
+        let res3 = self.crt_lookup_add(ctx, p_times_q.into().clone(), r.into(), a_times_b.into().clone(), modulus);
+        let res4 = self.and(ctx, res1, res2);
+        let res5 = self.and(ctx, res4, res3);
 
-        //ctx.get(0)
-        unimplemented!()
+        println!("\nmodulus = {:?}, \na = {:?}, \nb = {:?}, \np = {:?}, \nq = {:?}, \nr = {:?}", fe_to_biguint(&modulus), fe_to_biguint(a.into().value()), fe_to_biguint(b.into().value()), fe_to_biguint(p.into().value()), fe_to_biguint(q.into().value()), fe_to_biguint(r.into().value()));
+        
+        res5
     }
 }

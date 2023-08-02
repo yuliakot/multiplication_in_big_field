@@ -16,12 +16,12 @@ pub struct Modulus<F: ScalarField>{
     pub residue_of_a_limb: F,
 }
 
-fn find_residue<F: ScalarField>(modulus: &BigUint)->F{
-    biguint_to_fe::<F>(&pow_of_two())
+pub fn find_residue<F: ScalarField>(modulus: &BigUint)->F{
+    biguint_to_fe::<F>(&pow_of_two().div_rem(modulus).1)
 }
 
 
-pub fn fe_to_modulus<F: ScalarField>(modulus: &BigUint)-> Modulus::<F>{
+pub fn biguint_to_modulus<F: ScalarField>(modulus: &BigUint)-> Modulus::<F>{
     let residue_of_a_limb = find_residue(modulus);
     let modulus = biguint_to_fe::<F>(modulus);
     Modulus{

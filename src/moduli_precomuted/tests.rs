@@ -6,7 +6,7 @@ use halo2_base::halo2_proofs::{
     arithmetic::Field,
     circuit::*,
     dev::MockProver,
-    halo2curves::bn256::{Bn256, Fr, G1Affine},
+    halo2curves::bn256::{Bn256, Fr, Fq},
     plonk::*,
     poly::kzg::multiopen::VerifierSHPLONK,
     poly::kzg::strategy::SingleStrategy,
@@ -36,9 +36,19 @@ use criterion::{BenchmarkId, Criterion};
 
 use test_case::test_case;
 
-use super::pow_of_two;
+//use super::pow_of_two;
+use super::*;
 
 #[test]
 fn test_pow_of_two(){
     println!("\n2^128 = {:?}\n", pow_of_two());
+}
+
+#[test_case(11u32 => Fr::from(3); "2^128 = 3 mod 11")] // 32 = 2^5 = -1 mod 11; 2^128 = 2^120 * 2^5 * 8 = -8 = 3 mod 11
+#[test_case(13u32 => Fr::from(9); "2^128 = 9 mod 13")] // 2^ 128 = 16^32 = 3^32 = 27^30 * 9 = 9
+
+
+fn test_residue_precomputed<F: ScalarField>(modulus: u32) -> F {
+    let modulus: Modulus<F> = biguint_to_modulus(&BigUint::from(modulus));
+    modulus.residue_of_a_limb
 }
