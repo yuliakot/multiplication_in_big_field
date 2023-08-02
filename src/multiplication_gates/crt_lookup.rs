@@ -24,18 +24,10 @@ pub trait FLGateChip<F: ScalarField>{
     fn crt_lookup_add(
         &self,
         ctx: &mut Context<F>,
-        a: impl Into<QuantumCell<F>>,
-        b: impl Into<QuantumCell<F>>,
-        a_plus_b: impl Into<QuantumCell<F>>,
-        modulus: F,) -> AssignedValue<F>
-        {
-            //unimplemented!()
-            //returns TRUE always 
-            //for testing purposes
-            ctx.assign_region_last([Witness(F::zero())], [])
-            //ctx.get(0)
-
-        }
+        a: AssignedValue<F>,
+        b: AssignedValue<F>,
+        a_plus_b: AssignedValue<F>,
+        modulus: F,) -> AssignedValue<F>;
 
     fn crt_lookup_division_with_remainder(
         &self,
@@ -46,6 +38,22 @@ pub trait FLGateChip<F: ScalarField>{
 }
 
 impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
+    fn crt_lookup_add(
+        &self,
+        ctx: &mut Context<F>,
+        a: AssignedValue<F>,
+        b: AssignedValue<F>,
+        a_plus_b: AssignedValue<F>,
+        modulus: F,) -> AssignedValue<F>
+    {
+        let true_a_plus_b = self.add(ctx, a, b);
+        let diff = self.sub(ctx, true_a_plus_b, a_plus_b);
+        let diff_is_zero = self.is_equal(ctx, diff, Constant(F::zero()));
+        let diff_is_modulus = self.is_equal(ctx, diff, Constant(modulus));
+        self.or(ctx, diff_is_zero, diff_is_modulus)
+    }
+
+
     fn crt_lookup_division_with_remainder(
         &self,
         ctx: &mut Context<F>,
