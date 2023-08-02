@@ -66,4 +66,4 @@ Now we want to pre-compute lookup tables $(a,\; b,\; ab \mod m_i)$ as above for 
 
 This bit is inspired by [Aztec](https://hackmd.io/@arielg/B13JoihA8) implementation, as well as this [paper](https://eprint.iacr.org/2022/1470.pdf). 
 
-Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; lib\_ bits}$.
+Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; limb_{-}bits}$.
