@@ -46,6 +46,7 @@ impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
         a_plus_b: AssignedValue<F>,
         modulus: F,) -> AssignedValue<F>
     {
+        // need to also make sure that a_plus_b < modulus
         let true_a_plus_b = self.add(ctx, a, b);
         let diff = self.sub(ctx, true_a_plus_b, a_plus_b);
         let diff_is_zero = self.is_equal(ctx, diff, Constant(F::zero()));
