@@ -6,10 +6,12 @@ use halo2_base::{
         builder::GateThreadBuilder,
         GateChip,
         GateInstructions,
+        RangeChip, 
+        RangeInstructions
     },
     AssignedValue,
     Context,
-    QuantumCell::{self, Constant, Existing, Witness, WitnessFraction},
+    QuantumCell::{self, Constant, Existing, Witness},
 };
 use halo2_proofs_axiom::dev::MockProver;
 //use num_bigint::BigInt;

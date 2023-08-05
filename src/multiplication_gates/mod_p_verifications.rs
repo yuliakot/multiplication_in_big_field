@@ -6,6 +6,6 @@ pub fn mod_r_mul<F: ScalarField>(chip: &GateChip<F>, ctx: &mut Context<F>, input
 
     let a_times_b = chip.mul(ctx, a, b);
     let p_times_q_plus_r = chip.mul_add(ctx, p, q, r);
-    let res = chip.is_equal(ctx, p_times_q_plus_r, a_times_b);
+    let res = chip.is_equal(ctx, Existing(p_times_q_plus_r), Existing(a_times_b));
     res
 }   

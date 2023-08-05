@@ -1,7 +1,8 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use halo2_base::gates::builder::{GateCircuitBuilder, GateThreadBuilder};
-use halo2_base::gates::flex_gate::{FlexGateConfig, GateChip, GateInstructions, GateStrategy};
+use halo2_base::gates::{flex_gate::{FlexGateConfig, GateChip, GateInstructions},
+                range::{RangeStrategy, RangeChip, RangeInstructions}};
 use halo2_base::halo2_proofs::{
     arithmetic::Field,
     circuit::*,
@@ -36,6 +37,7 @@ use criterion::{BenchmarkId, Criterion};
 
 use big_field_multiplication::crt_mul;
 use big_field_multiplication::crt_int::{CRTint, biguint_into_crtint, fe_into_crtint};
+use big_field_multiplication::moduli_precomuted::{Modulus, fe_to_modulus};
 
 use test_case::test_case;
 
@@ -54,7 +56,7 @@ fn read_inputs(i: i32) -> [u64; 2]{
 fn test_more_moduli(a: u64, b: u64){
     let k = 6;
     let mut builder = GateThreadBuilder::new(false);
-    let chip = GateChip::default();
+    let chip = RangeChip::<Fr>::default(10);
     let ctx = builder.main(0);
 
     let moduli = vec![5u64, 6, 11, 13].iter().map(|x| Fr::from(*x)).collect();
@@ -66,7 +68,7 @@ fn test_more_moduli(a: u64, b: u64){
 
     let [a, b] = [a, b].map(BigUint::from);
 
-    let res = crt_mul(&chip, ctx, &a, &b, &crt_p, &moduli);
+    let res = crt_mul(chip, ctx, &a, &b, &crt_p, &moduli);
 
     builder.config(k, Some(9));
 
@@ -82,7 +84,7 @@ fn test_more_moduli(a: u64, b: u64){
 fn test_few_moduli(a: u64, b: u64){
     let k = 6;
     let mut builder = GateThreadBuilder::new(false);
-    let chip = GateChip::default();
+    let chip = RangeChip::<Fr>::default(10);
     let ctx = builder.main(0);
 
     let moduli = vec![7].iter().map(|x| Fr::from(*x)).collect();
@@ -94,7 +96,7 @@ fn test_few_moduli(a: u64, b: u64){
 
     let [a, b] = [a, b].map(BigUint::from);
 
-    let res = crt_mul(&chip, ctx, &a, &b, &crt_p, &moduli);
+    let res = crt_mul(chip, ctx, &a, &b, &crt_p, &moduli);
 
     builder.config(k, Some(9));
 

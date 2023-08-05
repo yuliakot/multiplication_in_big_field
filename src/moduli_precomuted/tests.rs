@@ -49,6 +49,9 @@ fn test_pow_of_two(){
 
 
 fn test_residue_precomputed<F: ScalarField>(modulus: u32) -> F {
-    let modulus: Modulus<F> = biguint_to_modulus(&BigUint::from(modulus));
+    let mut builder = GateThreadBuilder::new(false);
+    let ctx = builder.main(0);
+
+    let modulus: Modulus<F> = biguint_to_modulus(ctx, &BigUint::from(modulus));
     modulus.residue_of_a_limb
 }

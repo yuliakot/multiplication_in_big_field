@@ -7,6 +7,7 @@ pub mod moduli_precomuted;
 
 
 use itertools::izip;
+use moduli_precomuted::Modulus;
 use num_bigint::BigUint;
 use num_integer::Integer;
 use std::convert::TryInto;
@@ -21,6 +22,8 @@ use halo2_base::{
         builder::GateThreadBuilder,
         GateChip,
         GateInstructions,
+        RangeChip,
+        RangeInstructions
     },
     AssignedValue,
     Context,
@@ -28,7 +31,9 @@ use halo2_base::{
 };
 use halo2_proofs_axiom::dev::MockProver;
 
-use crate::crt_int::{CRTint, biguint_into_crtint};
+use crate::{crt_int::{CRTint, biguint_into_crtint}, 
+            multiplication_gates::crt_lookup,
+            moduli_precomuted::{fe_to_modulus}};
 
 fn into_crtint_batch<'a, F:ScalarField>(
     (a,b, a_times_b, q,p_times_q, r): 
@@ -45,7 +50,7 @@ fn into_crtint_batch<'a, F:ScalarField>(
      ]
  }
 
-fn zip_residues_batch<F:ScalarField>(
+ fn zip_residues_batch<F:ScalarField>(
     [a,b, a_times_b, q,p_times_q, r]: 
     [&CRTint<F>; 6],
     crt_p: &CRTint<F>,
@@ -65,13 +70,14 @@ fn zip_residues_batch<F:ScalarField>(
  
 
 pub fn crt_mul<F: ScalarField>(
-    chip: &GateChip<F>,
+    chip: RangeChip<F>,
     ctx: &mut Context<F>,
     a: &BigUint,
     b: &BigUint,
     crt_p: &CRTint<F>,
     moduli: &Vec<F>) -> AssignedValue<F>
     {
+
         //Step 1: finding q, r, a_times_b = a*b = p*q + r; p_times_q
         let p = crt_p.value.clone();
         let a_times_b = a*b;
@@ -81,7 +87,8 @@ pub fn crt_mul<F: ScalarField>(
 
         println!("\na = {:?}, \nb = {:?}, \np = {:?}, \nq = {:?}, \nr = {:?}", a, b, p, q, r);
 
-        let [a,b, a_times_b, q,p_times_q, r] = into_crtint_batch((&a,&b, &a_times_b, &q,&p_times_q, &r), moduli, &p);
+        let [a,b, a_times_b, q,p_times_q, r] = 
+            into_crtint_batch((&a,&b, &a_times_b, &q,&p_times_q, &r), moduli, &p);
         let p_mod_n = ctx.load_constant(biguint_to_fe(&p));
                         
         //Steps 2-3: range checks:
@@ -95,19 +102,21 @@ pub fn crt_mul<F: ScalarField>(
                                     q.residue_mod_n, 
                                     r.residue_mod_n];
 
-        mod_r_mul(chip, ctx, &mod_n_inputs, p_mod_n);
+        mod_r_mul(&chip.gate(), ctx, &mod_n_inputs, p_mod_n);
 
         //Steps 5-6: CRT operations
 
         let zipped_inputs = 
-        zip_residues_batch([&a,&b, &a_times_b, &q,&p_times_q, &r], &crt_p, &moduli);
+        zip_residues_batch([&a,&b, &a_times_b, &q,&p_times_q, &r], &crt_p, moduli);
 
         for (curr_inputs, curr_p, curr_modulus) in zipped_inputs.iter()
         {
             let assigned_inputs = ctx.assign_witnesses(*curr_inputs);
             let assigned_p = ctx.load_constant(*curr_p);
             let assigned_inputs: [AssignedValue<F>; 6] = assigned_inputs.try_into().unwrap();
-            chip.crt_lookup_division_with_remainder(ctx, assigned_inputs, assigned_p, *curr_modulus);
+            let curr_modulus = fe_to_modulus(ctx, curr_modulus);
+            
+            chip.crt_lookup_division_with_remainder(ctx, assigned_inputs, assigned_p, &curr_modulus);
         }   
         ctx.get(0)
 
