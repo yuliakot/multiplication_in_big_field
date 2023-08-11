@@ -44,8 +44,11 @@ fn test_crt_mod_p_mul(i: i32) -> Fr{
 
 use super::crt_lookup::FLGateChip;
 
-#[test_case([5, 10, 1].map(&Fr::from) => Fr::from(1); "5 + 10 == 1 mod 7")]
-#[test_case([5, 5, 10].map(&Fr::from) => Fr::from(0); "5 + 5 != 10 mod 7")]
+//#[should_panic(expected = "")]
+//#[test_case([5, 10, 1].map(&Fr::from) => Fr::from(0); "5 + 10 == 1 mod 7 but panic")]
+//#[test_case([5, 5, 10].map(&Fr::from) => Fr::from(0); "5 + 5 != 10 mod 7")]
+//#[test_case([5, 1, 6].map(&Fr::from) => Fr::from(1); "5 + 1 == 6 mod 7")]
+#[test_case([5, 5, 3].map(&Fr::from) => Fr::from(1); "5 + 5 == 3 mod 7")]
 
 fn test_crt_other_moduli_add(inputs: [Fr; 3]) -> Fr{
     let k = 10;

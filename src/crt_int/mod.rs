@@ -11,6 +11,7 @@ pub struct CRTint<F: ScalarField>{
     pub value: BigUint,
     pub residue_mod_n: F,
     pub limbs_as_fe: [F; 2],
+    pub limb_bits: usize,
 }
 
 fn a_mod_q<F: ScalarField>(a: &BigUint, p: F) -> F{
@@ -51,6 +52,7 @@ pub fn biguint_into_crtint<F:ScalarField>(a: &BigUint, moduli: &Vec<F>, p: &BigU
         value: a.clone(),
         residue_mod_n: residue_mod_n,
         limbs_as_fe: limbs,
+        limb_bits: 128
     }
 }
 

@@ -77,7 +77,9 @@ impl<F: ScalarField> FLGateChip<F> for RangeChip<F>{
         let diff = self.gate().sub(ctx, Existing(true_a_plus_b), a_plus_b.clone());
         let diff_is_zero = self.gate().is_equal(ctx, Existing(diff), Constant(F::zero()));
         let diff_is_modulus = self.gate().is_equal(ctx, Existing(diff), modulus.assigned);
-        println!("diff is 0 {:?}, \ndiff is modulus{:?}", diff_is_zero.value(), diff_is_modulus.value());
+        println!("diff is 0 {:?}, \ndiff is modulus {:?}",
+        {if *diff_is_zero.value() == F::one() {true} else {false}}, 
+        {if *diff_is_modulus.value() == F::one(){true} else{false}});
         self.gate().or(ctx, Existing(diff_is_zero), Existing(diff_is_modulus))
         
     }

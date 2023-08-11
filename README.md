@@ -66,4 +66,24 @@ Now we want to pre-compute lookup tables $(a,\; b,\; ab \mod m_i)$ as above for 
 
 This bit is inspired by [Aztec](https://hackmd.io/@arielg/B13JoihA8) implementation, as well as this [paper](https://eprint.iacr.org/2022/1470.pdf). 
 
-Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; limb_{-}bits}$.
+Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; limb_{-}bits}$. We will use 128-bit limbs. In other words, we will be using $(a_0, a_1)$ as the representation of the $\mod p$ element $a$ in $\mathbb{F}_n$. This will be important since $a$ might be greater than $n$.
+
+## Algorithm
+
+1. Preparation
+    1. Finding witnesses $q$ and $r$, such that $ab = pq+r$.
+    2. Loading witnesses: pairs $(a_0, a_1), \ldots$ such that $a^0 + 2^{128}a^1 = a$. 
+2. LHS range checks.
+    1. Checking that $a < p$. We need to see that $a^1 < p^1 + 1$ and $a^0 \cdot \delta_{a^1, p^1} < p^0$.
+    2. Same for $b$. We get $LHS \le (p-1)(p-1) = p^2-2p+1$.
+3. RHS range checks.
+    1. Checking that $q < p-1$ and $r < p$. We get $RHS \le p(p-2) + (p-1) = p^2 -p + 1$ (note that this needs to be true if $ LHS = RHS$).
+4. Checking that $a \cdot b =  q \cdot p + r \mod n$;
+5. $a$, $b$, $q$, $r$ are converted into the CRT form: $a \mapsto (a_1, a_2, \ldots)$ where $a_i = a = a^0 + 2^{128}a^1\mod m_i$;
+6. CRT operations (to simplify the notation, let us fix a modulus $m_i$).
+    1. Finding $(a_i,  b_i, a_ib_i )$, $(p_i,  q_i, p_iq_i )$ in the lookup table.
+    2. For addition:  checking that $r_i < m_i$; then checking that 
+    $$(p_iq_i \mod m_i) + (r_i  \mod m_i) = (p_iq_i + r_i \mod m_i) $$
+    or $$(p_iq_i \mod m_i) + (r_i  \mod m_i) = (p_iq_i + r_i \mod m_i) + m_i.$$
+
+

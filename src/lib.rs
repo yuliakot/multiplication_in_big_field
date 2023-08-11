@@ -4,6 +4,7 @@
 pub mod multiplication_gates;
 pub mod crt_int;
 pub mod moduli_precomuted;
+pub mod range_checks;
 
 
 use itertools::izip;
@@ -11,6 +12,8 @@ use moduli_precomuted::Modulus;
 use num_bigint::BigUint;
 use num_integer::Integer;
 use std::convert::TryInto;
+
+use range_checks::*;
 
 
 use multiplication_gates::{mod_p_verifications::*, crt_lookup::FLGateChip};
@@ -35,7 +38,7 @@ use crate::{crt_int::{CRTint, biguint_into_crtint},
             multiplication_gates::crt_lookup,
             moduli_precomuted::{fe_to_modulus}};
 
-fn into_crtint_batch<'a, F:ScalarField>(
+fn into_crtint_batch<F:ScalarField>(
     (a,b, a_times_b, q,p_times_q, r): 
     (&BigUint,&BigUint,&BigUint,&BigUint,&BigUint,&BigUint,),
      moduli: &Vec<F>,
@@ -89,14 +92,16 @@ pub fn crt_mul<F: ScalarField>(
 
         let [a,b, a_times_b, q,p_times_q, r] = 
             into_crtint_batch((&a,&b, &a_times_b, &q,&p_times_q, &r), moduli, &p);
-        let p_mod_n = ctx.load_constant(biguint_to_fe(&p));
                         
         //Steps 2-3: range checks:
 
         //TODO: check that a = a_0 + 2^{128}*a_1; check that a_0 < 2^128; a_1 < 2^128
+        
 
         
         //Step 4: native operations
+        let p_mod_n = ctx.load_constant(biguint_to_fe(&p));
+        
         let mod_n_inputs = [a.residue_mod_n,
                                     b.residue_mod_n, 
                                     q.residue_mod_n, 
