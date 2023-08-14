@@ -36,8 +36,8 @@ pub fn check_big_less_than_p<F:ScalarField>
     )
     {
         let num_bits = 12;
-//        chip.check_less_than(ctx, Constant(F::zero()), a1_assigned, num_bits);
-//        chip.check_less_than(ctx, Constant(F::zero()), a0_assigned, num_bits);
+        chip.check_less_than(ctx, Constant(F::zero()), a1_assigned, num_bits);
+        chip.check_less_than(ctx, Constant(F::zero()), a0_assigned, num_bits);
         // need to check that                 
         // either a1 < p1 or a1 == p1, and then we need another range check
         
