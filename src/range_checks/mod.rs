@@ -27,109 +27,56 @@ use crate::{crt_int::{CRTint, biguint_into_crtint},
 
 
 
-// borrowed from https://github.com/axiom-crypto/halo2-lib/blob/402dac423da4259f97788827848ee0d9443454d2/halo2-base/src/gates/range.rs#L457
-// fn compute_limb_bases<F: ScalarField>(limb_bits: &u32, num_bases: &usize) -> Vec<QuantumCell<F>>
-// {
-//     let limb_base = F::from(1u64 << limb_bits);
-//     let mut running_base = limb_base;
-//     let mut limb_bases = Vec::with_capacity(num_bases + 1);
-//     limb_bases.extend([Constant(F::one()), Constant(running_base)]);
-//     for _ in 2..= *num_bases {
-//         running_base *= &limb_base;
-//         limb_bases.push(Constant(running_base));
-//     }
-//     limb_bases
-// }
-
-//fn verify_limbs<F: ScalarField>
-//    (
-//        chip: RangeChip<F>, 
-//        ctx: &mut Context<F>, 
-//        a: AssignedValue<F>, 
-//        a_limbs: &Vec<AssignedValue<F>>,
-//        limb_bits: &usize,
-//    )
-    // {
-    //     let limb_bases = compute_limb_bases(limb_bits, a_limbs.len());
-    //     let a_from_bits = chip.gate().inner_product(ctx, a_limbs, limb_bases);
-    //     ctx.constrain_equal(&a, &a_from_bits);
-    // }
-
-fn load_limbs<F: ScalarField>
-    (
-        chip: RangeChip<F>, 
-        ctx: &mut Context<F>, 
-        a: &CRTint<F>,
-    ) -> Vec<AssignedValue<F>>
-    {
-        ctx.assign_witnesses(a.limbs_as_fe)
-    }
-
-
 pub fn check_big_less_than_p<F:ScalarField>
     (
-        chip: RangeChip<F>, 
+        chip: &RangeChip<F>, 
         ctx: &mut Context<F>, 
-        a: &CRTint<F>,
-        p: &CRTint<F>,
+        [a0_assigned, a1_assigned]: [impl Into<QuantumCell<F>> + Copy; 2],
+        [p0_assigned, p1_assigned]: [impl Into<QuantumCell<F>> + Copy; 2],
     )
     {
-        // here i am assuming only 2 limbs in both a and p
-        assert_eq!(a.limbs_as_fe.len(), p.limbs_as_fe.len());
-        assert_eq!(2, p.limbs_as_fe.len());
-        let num_bits = 128;
-        
-        let ([a0, a1], [p0, p1]) = (a.limbs_as_fe, p.limbs_as_fe);
-
-        let ([a0_assigned, a1_assigned], [p0_assigned, p1_assigned]) = 
-                        ([ctx.load_witness(a0), ctx.load_witness(a1)], [ctx.load_constant(p0), ctx.load_constant(p1)]);
-
+        let num_bits = 12;
+//        chip.check_less_than(ctx, Constant(F::zero()), a1_assigned, num_bits);
+//        chip.check_less_than(ctx, Constant(F::zero()), a0_assigned, num_bits);
         // need to check that                 
         // either a1 < p1 or a1 == p1, and then we need another range check
+        
 
-//        chip.check_less_than(ctx, a0, , num_bits)
-        todo!();
+        let p1_plus_one_assigned = chip.gate().add(ctx, p1_assigned, Constant(F::one()));
 
+        //a_1 \le p_1
+        chip.check_less_than(ctx, a1_assigned, p1_plus_one_assigned, num_bits);
+
+        //if a_1 == p_1, we want a_0 < p_O
+        let a1_is_p1 = chip.gate.is_equal(ctx, a1_assigned.clone(), p1_assigned.clone());
+        let need_to_check_small_bits = chip.gate().mul(ctx, Existing(a1_is_p1), a0_assigned);
+        chip.check_less_than(ctx, need_to_check_small_bits, p0_assigned, num_bits);
 
     }
 
-pub fn check_254_bits<F:ScalarField>
+
+    pub fn check_big_less_than_p_minus_one<F:ScalarField>
     (
-        chip: RangeChip<F>, 
+        chip: &RangeChip<F>, 
         ctx: &mut Context<F>, 
-        a: &CRTint<F>, 
-    )
+        [a0_assigned, a1_assigned]: [impl Into<QuantumCell<F>> + Copy; 2],
+        [p0_assigned, p1_assigned]: [impl Into<QuantumCell<F>> + Copy; 2],
+        )
     {
-        let [a0, a1] = a.limbs_as_fe;
-        let [a0_assigned, a1_assigned] = [ctx.load_witness(a0), ctx.load_witness(a1)];
+        let num_bits = 128;
+        chip.check_less_than(ctx, Constant(F::zero()), a1_assigned, num_bits);
+        chip.check_less_than(ctx, Constant(F::zero()), a0_assigned, num_bits);
+        // here i am assuming only 2 limbs in both a and p
+        let p1_plus_one_assigned = chip.gate().add(ctx, p1_assigned, Constant(F::one()));
 
+        chip.check_less_than(ctx, a1_assigned, p1_plus_one_assigned, num_bits);
 
-
-
-
+        let a1_is_p1 = chip.gate.is_equal(ctx, a1_assigned, p1_assigned);
+        let need_to_check_small_bits = chip.gate().mul(ctx, a1_is_p1, a0_assigned);
+        let p0_minus_one = chip.gate().sub(ctx, p0_assigned, Constant(F::one()));
+        chip.check_less_than(ctx, need_to_check_small_bits, p0_minus_one, num_bits);
 
     }
 
-    
-
-pub fn check_big_range<F:ScalarField>
-    (
-        chip: RangeChip<F>, 
-        ctx: &mut Context<F>, 
-        a: &CRTint<F>, 
-        bits: &usize
-    )
-    {
-        let mut bits = *bits;
-        let mut a_limbs = a.limbs_as_fe.iter();
-        //let mut assigned_limbs : Vec::<AssignedValue<F>> = vec![];
-
-        while let Some(curr_limb) = a_limbs.next(){
-            let assigned_curr_limb = ctx.load_witness(*curr_limb);
-            //assigned_limbs.push(assigned_curr_limb);
-            chip.range_check(ctx, assigned_curr_limb, a.limb_bits.min(bits));
-            bits = 0.max(a.limb_bits - bits);
-        }
-    }
-
-
+#[cfg(test)]
+pub mod tests;

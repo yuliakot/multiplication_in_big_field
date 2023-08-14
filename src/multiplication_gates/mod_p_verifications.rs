@@ -1,7 +1,7 @@
 use super::* ;
 use std::collections::HashMap;
 
-pub fn mod_r_mul<F: ScalarField>(chip: &GateChip<F>, ctx: &mut Context<F>, inputs: &[F; 4], p: AssignedValue<F>) -> AssignedValue<F> {
+pub fn mod_r_mul<F: ScalarField>(chip: &GateChip<F>, ctx: &mut Context<F>, inputs: &[F; 4], p: impl Into<QuantumCell<F>>) -> AssignedValue<F> {
     let [a, b, q, r]: [_; 4] = ctx.assign_witnesses(*inputs).try_into().unwrap();
 
     let a_times_b = chip.mul(ctx, a, b);

@@ -24,11 +24,6 @@ pub trait FLGateChip<F: ScalarField>{
             //ctx.get(0)
     }
 
-    fn range_check_for_addition(
-        &self,
-        ctx: &mut Context<F>,
-        value:impl Into<QuantumCell<F>> + Copy,
-        modulus: &Modulus<F>,);
 
     fn crt_lookup_add(
         &self,
@@ -48,16 +43,7 @@ pub trait FLGateChip<F: ScalarField>{
     ) -> AssignedValue<F>;
 }
 
-impl<F: ScalarField> FLGateChip<F> for RangeChip<F>{
-    fn range_check_for_addition(
-        &self,
-        ctx: &mut Context<F>,
-        value: impl Into<QuantumCell<F>> + Copy,
-        modulus: &Modulus<F>,){
-            self.check_less_than(ctx, value, modulus.assigned, modulus.bits);
-            self.check_less_than(ctx, Constant(F::from(0)),value.clone(), modulus.bits);
-        }
-
+impl<F: ScalarField> FLGateChip<F> for GateChip<F>{
 
     fn crt_lookup_add(
         &self,
@@ -72,15 +58,14 @@ impl<F: ScalarField> FLGateChip<F> for RangeChip<F>{
         //assert!(fe_to_bigint(b.value()) < fe_to_bigint(&modulus.value));
 
 
-        let range_is_good = self.range_check_for_addition(ctx, a_plus_b, modulus);  //make sure that a_plus_b < modulus
-        let true_a_plus_b = self.gate().add(ctx, a, b);
-        let diff = self.gate().sub(ctx, Existing(true_a_plus_b), a_plus_b.clone());
-        let diff_is_zero = self.gate().is_equal(ctx, Existing(diff), Constant(F::zero()));
-        let diff_is_modulus = self.gate().is_equal(ctx, Existing(diff), modulus.assigned);
+        let true_a_plus_b = self.add(ctx, a, b);
+        let diff = self.sub(ctx, Existing(true_a_plus_b), a_plus_b.clone());
+        let diff_is_zero = self.is_equal(ctx, Existing(diff), Constant(F::zero()));
+        let diff_is_modulus = self.is_equal(ctx, Existing(diff), modulus.assigned);
         println!("diff is 0 {:?}, \ndiff is modulus {:?}",
         {if *diff_is_zero.value() == F::one() {true} else {false}}, 
         {if *diff_is_modulus.value() == F::one(){true} else{false}});
-        self.gate().or(ctx, Existing(diff_is_zero), Existing(diff_is_modulus))
+        self.or(ctx, Existing(diff_is_zero), Existing(diff_is_modulus))
         
     }
 
@@ -100,8 +85,8 @@ impl<F: ScalarField> FLGateChip<F> for RangeChip<F>{
         let res1 = self.crt_lookup_mul(ctx, a, b, a_times_b, &modulus);
         let res2 = self.crt_lookup_mul(ctx, p, q, p_times_q, &modulus);
         let res3 = self.crt_lookup_add(ctx, p_times_q.clone(), r, a_times_b.clone(), &modulus);
-        let res4 = self.gate().and(ctx, res1, res2);
-        let res5 = self.gate().and(ctx, res4, res3);
+        let res4 = self.and(ctx, res1, res2);
+        let res5 = self.and(ctx, res4, res3);
 
         //println!("\nmodulus = {:?}, \na = {:?}, \nb = {:?}, \np = {:?}, \nq = {:?}, \nr = {:?}",  fe_to_bigint(&modulus), a.into().value(),  (&b.value),  (&p.value),  (&q.value),  (&r.value));
         

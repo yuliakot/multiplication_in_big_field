@@ -37,7 +37,7 @@ In reality, all steps are slightly more complicated, since the numbers are too l
 
 ### Lookup tables to look things up 
 
-Here is a way to perform non-native multiplication using a lookup table: we can find $ab \mod m$ using the  table with $m^2$ rows, whose rows are triples $(a, b, ab \mod m)$.
+Here is a way to perform non-native multiplication using a lookup table: we can find $ab \mod m$ using the  table with $m^2$ rows, whose rows are triples $(a, b, ab _{\mod m})$.
 
 Now in order to check that $ab = r \mod m$, we need to check that $(a, b, r)$ is in the lookup table (if $0\le r < m$).
 
@@ -72,7 +72,7 @@ Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^
 
 1. Preparation
     1. Finding witnesses $q$ and $r$, such that $ab = pq+r$.
-    2. Loading witnesses: pairs $(a_0, a_1), \ldots$ such that $a^0 + 2^{128}a^1 = a$. 
+    2. Loading witnesses: pairs $(a^0, a^1), \ldots$ such that $a^0 + 2^{128}a^1 = a$. 
 2. LHS range checks.
     1. Checking that $a < p$. We need to see that $a^1 < p^1 + 1$ and $a^0 \cdot \delta_{a^1, p^1} < p^0$.
     2. Same for $b$. We get $LHS \le (p-1)(p-1) = p^2-2p+1$.
@@ -80,10 +80,12 @@ Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^
     1. Checking that $q < p-1$ and $r < p$. We get $RHS \le p(p-2) + (p-1) = p^2 -p + 1$ (note that this needs to be true if $ LHS = RHS$).
 4. Checking that $a \cdot b =  q \cdot p + r \mod n$;
 5. $a$, $b$, $q$, $r$ are converted into the CRT form: $a \mapsto (a_1, a_2, \ldots)$ where $a_i = a = a^0 + 2^{128}a^1\mod m_i$;
+    1. Proving the CRT-reperesentation: 
+    $$(a^0 _{\mod m_i} + a^1 _{\mod m_i} \cdot 2^{128} _{\mod m_i})  \mod m_i = a_i$$
+    and $a_i < m_i$
 6. CRT operations (to simplify the notation, let us fix a modulus $m_i$).
     1. Finding $(a_i,  b_i, a_ib_i )$, $(p_i,  q_i, p_iq_i )$ in the lookup table.
-    2. For addition:  checking that $r_i < m_i$; then checking that 
-    $$(p_iq_i \mod m_i) + (r_i  \mod m_i) = (p_iq_i + r_i \mod m_i) $$
-    or $$(p_iq_i \mod m_i) + (r_i  \mod m_i) = (p_iq_i + r_i \mod m_i) + m_i.$$
-
-
+    2. For addition: then checking that 
+    $$p_iq_i  + r_i  = (p_iq_i + r_i )_{\mod m_i} $$
+    or $$p_iq_i + r_i  = (p_iq_i + r_i )_{\mod m_i} + m_i.$$
+    Note that we have verified that $r_i < m_i$ in 5.1.

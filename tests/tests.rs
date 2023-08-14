@@ -54,7 +54,7 @@ fn read_inputs(i: i32) -> [u64; 2]{
 #[test_case(444u64, 159u64)]
 
 fn test_more_moduli(a: u64, b: u64){
-    let k = 6;
+    let k = 10;
     let mut builder = GateThreadBuilder::new(false);
     let chip = RangeChip::<Fr>::default(10);
     let ctx = builder.main(0);

@@ -17,6 +17,7 @@ fn pow_of_two() -> BigUint{
 #[derive(Clone)]
 pub struct Modulus<F: ScalarField>{
     pub value: F,
+    pub biguint: BigUint,
     pub assigned: AssignedValue<F>,
     pub residue_of_a_limb: F,
     pub bits: usize,
@@ -33,6 +34,7 @@ pub fn biguint_to_modulus<F: ScalarField>(ctx: &mut Context<F>, modulus: &BigUin
     let assigned = ctx.load_constant(biguint_to_fe::<F>(modulus));
     Modulus{
         value: value,
+        biguint: modulus.clone(),
         assigned: assigned,
         residue_of_a_limb: residue_of_a_limb,
         bits : NUM_BITS,

@@ -13,11 +13,11 @@ use halo2_base::{
     Context,
     QuantumCell::{self, Constant, Existing, Witness},
 };
-use halo2_proofs_axiom::dev::MockProver;
-//use num_bigint::BigInt;
 
 pub mod mod_p_verifications;
 pub mod crt_lookup;
+pub mod crt_to_bits_proof;
+
 
 #[cfg(test)]
 pub mod tests;

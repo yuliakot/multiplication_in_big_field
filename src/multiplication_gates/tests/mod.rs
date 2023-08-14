@@ -5,9 +5,11 @@ use ark_std::fs::File;
 use test_case::test_case;
 use num_bigint::BigUint;
 
+
 use super::mod_p_verifications::mod_r_mul;
 use crate::moduli_precomuted::{biguint_to_modulus, fe_to_modulus, Modulus};
 
+use halo2_base::halo2_proofs::dev::MockProver;
 
 fn read_inputs_crt_mod_p_mul(i: i32) -> [u64; 4]{
     let path = format!("src/multiplication_gates/tests/tests_input{i}.in");
@@ -53,7 +55,7 @@ use super::crt_lookup::FLGateChip;
 fn test_crt_other_moduli_add(inputs: [Fr; 3]) -> Fr{
     let k = 10;
     let mut builder = GateThreadBuilder::new(false);
-    let chip: RangeChip<Fr> = RangeChip::default(15);
+    let chip: GateChip<Fr> = GateChip::default();
     let ctx = builder.main(0);
     
     let assigned_inputs = ctx.assign_witnesses(inputs);
