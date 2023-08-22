@@ -3,7 +3,6 @@ use halo2_proofs_axiom::dev::metadata::Gate;
 use halo2_base::utils::fe_to_biguint ;
 use num_bigint::BigUint;
 
-use crate::moduli_precomuted::Modulus;
 
 use super::* ;
 

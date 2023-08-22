@@ -2,7 +2,7 @@
 use super::*;
 use halo2_base::halo2_proofs::halo2curves::bn256::{Bn256, Fr, Fq};
 
-use crate::moduli_precomuted::{Modulus, fe_to_modulus};
+//use crate::moduli_precomuted::{Modulus, fe_to_modulus};
 use halo2_base::gates::builder::GateThreadBuilder;
 
 use test_case::test_case;

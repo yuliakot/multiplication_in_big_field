@@ -8,7 +8,7 @@ use halo2_base::utils::biguint_to_fe;
 
 
 use super::mod_p_verifications::mod_r_mul;
-use crate::moduli_precomuted::{biguint_to_modulus, fe_to_modulus, Modulus};
+//use crate::moduli_precomuted::{biguint_to_modulus, fe_to_modulus, Modulus};
 
 use halo2_base::halo2_proofs::dev::MockProver;
 

@@ -5,7 +5,7 @@ use super::*;
 use halo2_base::halo2_proofs::halo2curves::bn256::{Bn256, Fr, Fq};
 use halo2_proofs_axiom::halo2curves::FieldExt;
 
-use crate::moduli_precomuted::{Modulus, fe_to_modulus};
+//use crate::moduli_precomuted::{Modulus, fe_to_modulus};
 use crate::crt_int::modulus;
 use halo2_base::gates::builder::{GateCircuitBuilder, RangeCircuitBuilder, GateThreadBuilder};
 use halo2_base::gates::{flex_gate::{FlexGateConfig, GateChip, GateInstructions},

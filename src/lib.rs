@@ -3,13 +3,13 @@
 
 pub mod multiplication_gates;
 pub mod crt_int;
-pub mod moduli_precomuted;
+//pub mod moduli_precomuted;
 pub mod range_checks;
 
 
 use crt_int::biguint_into_crtint_bui_modulus;
 use itertools::izip;
-use moduli_precomuted::Modulus;
+//use moduli_precomuted::Modulus;
 use num_bigint::BigUint;
 use num_integer::Integer;
 use std::convert::TryInto;
@@ -35,7 +35,6 @@ use halo2_proofs_axiom::dev::MockProver;
 
 use crate::{crt_int::{CRTint, biguint_into_crtint_fe_modulus}, 
             multiplication_gates::{crt_lookup, crt_to_bits_proof::BITStoCRT},
-            moduli_precomuted::fe_to_modulus,
             range_checks::{check_big_less_than_p, check_big_less_than_p_minus_one}
         };
 

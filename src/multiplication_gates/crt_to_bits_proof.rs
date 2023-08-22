@@ -3,7 +3,7 @@ use std::str::SplitAsciiWhitespace;
 use halo2_proofs_axiom::dev::metadata::Gate;
 use num_bigint::BigUint;
 
-use crate::{moduli_precomuted::Modulus, range_checks::check_big_less_than_p};
+use crate::range_checks::check_big_less_than_p;
 
 use super::* ;
 use super::crt_lookup::CQLookupGateChip;

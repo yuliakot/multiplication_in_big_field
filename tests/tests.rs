@@ -38,7 +38,6 @@ use criterion::{BenchmarkId, Criterion};
 
 use big_field_multiplication::crt_mul;
 use big_field_multiplication::crt_int::{CRTint, biguint_into_crtint_bui_modulus, fe_into_crtint, fe_into_crtint_bui_modulus};
-use big_field_multiplication::moduli_precomuted::{Modulus, fe_to_modulus};
 
 use ark_std::One;
 

@@ -22,8 +22,7 @@ use halo2_base::{
 
 
 use crate::{crt_int::{CRTint, biguint_into_crtint_fe_modulus}, 
-            multiplication_gates::crt_lookup,
-            moduli_precomuted::fe_to_modulus};
+            multiplication_gates::crt_lookup};
 
 
 
