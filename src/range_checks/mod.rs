@@ -21,7 +21,7 @@ use halo2_base::{
 };
 
 
-use crate::{crt_int::{CRTint, biguint_into_crtint}, 
+use crate::{crt_int::{CRTint, biguint_into_crtint_fe_modulus}, 
             multiplication_gates::crt_lookup,
             moduli_precomuted::fe_to_modulus};
 
@@ -35,10 +35,9 @@ pub fn check_big_less_than_p<F:ScalarField>
         [p0_assigned, p1_assigned]: [impl Into<QuantumCell<F>> + Copy; 2],
     )
     {
-        let num_bits = 12;
+        let num_bits = 128;
         // need to check that                 
         // either a1 < p1 or a1 == p1, and then we need another range check
-        
 
         let p1_plus_one_assigned = chip.gate().add(ctx, p1_assigned, Constant(F::one()));
 
@@ -49,7 +48,7 @@ pub fn check_big_less_than_p<F:ScalarField>
         let a1_is_p1 = chip.gate.is_equal(ctx, a1_assigned.clone(), p1_assigned.clone());
         let need_to_check_small_bits = chip.gate().mul(ctx, Existing(a1_is_p1), a0_assigned);
         chip.check_less_than(ctx, need_to_check_small_bits, p0_assigned, num_bits);
-
+        
     }
 
 

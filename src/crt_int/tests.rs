@@ -18,7 +18,7 @@ fn test_limbs(a: &BigUint) -> [Fq; 2]{
     let moduli = &moduli.iter().map(|x|  Fq::from(*x))
                                             .collect::<Vec::<Fq>>();
     let p = BigUint::from(11u32);
-    let crt_integer = biguint_into_crtint(a, moduli, &p);
+    let crt_integer = biguint_into_crtint_fe_modulus(a, moduli);
     crt_integer.limbs_as_fe
 
 }

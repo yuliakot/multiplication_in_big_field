@@ -18,8 +18,13 @@ fn a_mod_q<F: ScalarField>(a: &BigUint, p: F) -> F{
     biguint_to_fe::<F>(&(a % fe_to_biguint(&p)))
 }
 
-fn into_crt<F: ScalarField>(a: &BigUint, moduli: &Vec<F>) -> Vec<F>{
+fn find_residues_fe<F: ScalarField>(a: &BigUint, moduli: &Vec<F>) -> Vec<F>{
     let res = moduli.iter().map(|x | a_mod_q(a, *x)).collect();
+    res
+}
+
+fn find_residues_bui<F: ScalarField>(a: &BigUint, moduli: &Vec<BigUint>) -> Vec<F>{
+    let res = moduli.iter().map(|x| biguint_to_fe(&a.div_rem(x).1)).collect();
     res
 }
 
@@ -42,10 +47,34 @@ fn biguint_to_limbs<F: ScalarField>(a: &BigUint) -> [F; 2]{
     [limb0, limb1]
 }
 
-pub fn biguint_into_crtint<F:ScalarField>(a: &BigUint, moduli: &Vec<F>, p: &BigUint) -> CRTint<F>
+// Borrowed from https://github.com/axiom-crypto/halo2-lib/blob/f2eacb1f7fdbb760213cf8037a1bd1a10672133f/halo2-base/src/utils.rs#L106
+// Returns the modulus of [ScalarField].
+pub fn modulus<F: ScalarField>() -> BigUint {
+    fe_to_biguint(&-F::one()) + 1u64
+}
+
+pub fn biguint_into_crtint_fe_modulus<F:ScalarField>(a: &BigUint, moduli: &Vec<F>) -> CRTint<F>
 {
-    let residues: Vec<F> = into_crt(a, moduli);
-    let residue_mod_n =  biguint_to_fe::<F>(a);
+    let n = modulus::<F>();
+    let residues: Vec<F> = find_residues_fe(a, moduli);
+    let residue_mod_n =  biguint_to_fe::<F>(&(a % n));
+    
+    let limbs = biguint_to_limbs::<F>(a);
+    CRTint{
+        residues: residues,
+        value: a.clone(),
+        residue_mod_n: residue_mod_n,
+        limbs_as_fe: limbs,
+        limb_bits: 128
+    }
+}
+
+pub fn biguint_into_crtint_bui_modulus<F:ScalarField>(a: &BigUint, moduli: &Vec<BigUint>) -> CRTint<F>
+{
+    let n = modulus::<F>();
+    let residues: Vec<F> = find_residues_bui(a, moduli);
+    let residue_mod_n =  biguint_to_fe::<F>(&(a % n));
+    
     let limbs = biguint_to_limbs::<F>(a);
     CRTint{
         residues: residues,
@@ -57,9 +86,15 @@ pub fn biguint_into_crtint<F:ScalarField>(a: &BigUint, moduli: &Vec<F>, p: &BigU
 }
 
 
-pub fn fe_into_crtint<F:ScalarField>(a: &F, moduli: &Vec<F>, p: &F) -> CRTint<F>
+pub fn fe_into_crtint<F:ScalarField>(a: &F, moduli: &Vec<F>) -> CRTint<F>
 {
-    let (a, p) = (&fe_to_biguint(a), &fe_to_biguint(p));
-    biguint_into_crtint(a, moduli, p)
+    let a= &fe_to_biguint(a);
+    biguint_into_crtint_fe_modulus(a, moduli)
+
+}
+pub fn fe_into_crtint_bui_modulus<F:ScalarField>(a: &F, moduli: &Vec<BigUint>) -> CRTint<F>
+{
+    let a= &fe_to_biguint(a);
+    biguint_into_crtint_bui_modulus(a, moduli)
 
 }
