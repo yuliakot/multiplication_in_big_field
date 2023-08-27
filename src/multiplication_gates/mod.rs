@@ -3,6 +3,7 @@ use halo2_base::{
     utils::ScalarField,
     gates::{
         builder::GateCircuitBuilder,
+        builder::RangeCircuitBuilder,
         builder::GateThreadBuilder,
         GateChip,
         GateInstructions,
@@ -14,7 +15,7 @@ use halo2_base::{
     QuantumCell::{self, Constant, Existing, Witness},
 };
 
-pub mod mod_p_verifications;
+pub mod mod_r_verifications;
 pub mod crt_lookup;
 pub mod crt_to_bits_proof;
 

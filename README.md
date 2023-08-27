@@ -69,23 +69,30 @@ This bit is inspired by [Aztec](https://hackmd.io/@arielg/B13JoihA8) implementat
 Traditionally, computations with big integers use limbs: $a = \sum_{i= 0} a_i 2^{i\;\cdot \; limb_{-}bits}$. We will use 128-bit limbs. In other words, we will be using $(a_0, a_1)$ as the representation of the $\mod p$ element $a$ in $\mathbb{F}_n$. This will be important since $a$ might be greater than $n$.
 
 ## Algorithm
+The algorithm is realized by the function [**crt_mul**](./src/lib.rs#L57). The inputs are `a: &BigUint`, `b: &BigUint`, `crt_p: &CRTint<F>`, `moduli: &Vec<BigUint>`. Computes and constrains `r` $ = a\cdot b \mod p$. Returns `bits_r`.
 
 1. Preparation
     1. Finding witnesses $q$ and $r$, such that $ab = pq+r$.
+
+2. [**biguint_into_crtint_fe_modulus**](./src/crt_int/mod.rs#L56)
+    1. $a$, $b$, $q$, $r$ are converted into the CRT form: $a \mapsto (a_1, a_2, \ldots)$ where $a_i = a = a^0 + 2^{128}a^1\mod m_i$;
     2. Loading witnesses: pairs $(a^0, a^1), \ldots$ such that $a^0 + 2^{128}a^1 = a$. 
-2. LHS range checks.
+3. [**check_big_less_than_p**](./src/range_checks/mod.rs#L29): LHS range checks.
     1. Checking that $a < p$. We need to see that $a^1 < p^1 + 1$ and $a^0 \cdot \delta_{a^1, p^1} < p^0$.
     2. Same for $b$. We get $LHS \le (p-1)(p-1) = p^2-2p+1$.
-3. RHS range checks.
+4. [**check_big_less_than_p**](./src/range_checks/mod.rs#L54): RHS range checks.
     1. Checking that $q < p-1$ and $r < p$. We get $RHS \le p(p-2) + (p-1) = p^2 -p + 1$ (note that this needs to be true if $ LHS = RHS$).
-4. Checking that $a \cdot b =  q \cdot p + r \mod n$;
-5. $a$, $b$, $q$, $r$ are converted into the CRT form: $a \mapsto (a_1, a_2, \ldots)$ where $a_i = a = a^0 + 2^{128}a^1\mod m_i$;
-    1. Proving the CRT-reperesentation: 
-    $$(a^0 _{\mod m_i} + a^1 _{\mod m_i} \cdot 2^{128} _{\mod m_i})  \mod m_i = a_i$$
-    and $a_i < m_i$
-6. CRT operations (to simplify the notation, let us fix a modulus $m_i$).
-    1. Finding $(a_i,  b_i, a_ib_i )$, $(p_i,  q_i, p_iq_i )$ in the lookup table.
-    2. For addition: then checking that 
-    $$p_iq_i  + r_i  = (p_iq_i + r_i )_{\mod m_i} $$
-    or $$p_iq_i + r_i  = (p_iq_i + r_i )_{\mod m_i} + m_i.$$
-    Note that we have verified that $r_i < m_i$ in 5.1.
+5. [**mod_r_mul**](src/multiplication_gates/mod_r_verifications.rs#L4): Checking that $a \cdot b =  q \cdot p + r \mod n$;
+6. [**crt_lookup_division_with_remainder**](src/multiplication_gates/crt_lookup.rs#L131) CRT operations (to simplify the notation, let us fix a modulus $m_i$).
+    1. [**crt_lookup_mul**](src/multiplication_gates/crt_lookup.rs#L121)Finding $(a_i,  b_i, a_ib_i )$, $(p_i,  q_i, p_iq_i )$ in the lookup table.
+    2. [**crt_lookup_add**](src/multiplication_gates/crt_lookup.rs#L182)For addition: then checking that $$p_iq_i  + r_i  = (p_iq_i + r_i )_{\mod m_i} $$ for $$p_iq_i + r_i  = (p_iq_i + r_i )_{\mod m_i} + m_i.$$ Note that we verify that $r_i < m_i$ in 6.3.
+    3. [**bits_to_crt_check**](src/multiplication_gates/crt_to_bits_proof.rs#79) Proving the CRT-reperesentation: $$(a^0 _{\mod m_i} + a^1 _{\mod m_i} \cdot 2^{128} _{\mod m_i})  \mod m_i = a_i$$ 
+    and $a_i < m_i$ , for $a$, $b$, $q$ and $r$.
+
+## This package
+
+[**CRTint**](./src/crt_int/mod.rs#L9) struct, containing all the CRT information: residues modulo each $m_i$, residue modulo $n$, $128$-bit limbs.
+
+[**CQLookupGateChip**](src/multiplication_gates/crt_lookup.rs#L11) trait, implementing addition and multiplication modulo $m_i$ for small $m_i$.
+
+[**BITStoCRT**](src/multiplication_gates/crt_to_bits_proof.rs) trait, implementing methods that constrain $$(a^0 _{\mod m_i} + a^1 _{\mod m_i} \cdot 2^{128} _{\mod m_i})  \mod m_i = a_i.$$

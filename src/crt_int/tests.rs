@@ -22,3 +22,12 @@ fn test_limbs(a: &BigUint) -> [Fq; 2]{
     crt_integer.limbs_as_fe
 
 }
+
+#[test_case([200, 301].map(&Fr::from), [11, 13, 17, 21, 23].map(&Fr::from))]
+fn test_bits_to_crt(inputs: [Fr; 2], moduli: [Fr; 5]){
+    let k = 12;
+
+    let residues = limb_bits_to_crt([&inputs[0], &inputs[1]], &moduli.to_vec()).residues;
+
+    println!("{:?}", residues);
+}

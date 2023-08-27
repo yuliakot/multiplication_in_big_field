@@ -32,7 +32,7 @@ pub trait BITStoCRT<F: ScalarField> {
     fn find_pow_two_residue(
         &self,
         ctx: &mut Context<F>,
-        modulus: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>;
 
@@ -40,52 +40,59 @@ pub trait BITStoCRT<F: ScalarField> {
         &self,
         ctx: &mut Context<F>,
         a: impl Into<QuantumCell<F>> + Copy,
-        modulus: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>;
 
-    fn bits_to_residue_proof(
+    fn bits_to_residue_find(
         &self,
         ctx: &mut Context<F>,
         limbs: [impl Into<QuantumCell<F>> + Copy;2],
-        modulus: impl Into<QuantumCell<F>> + Copy,
-        residue: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>;
+
+    
+    fn bits_to_residue_constrain(
+        &self,
+        ctx: &mut Context<F>,
+        limbs: [impl Into<QuantumCell<F>> + Copy;2],
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        residue: impl Into<QuantumCell<F>> + Copy,
+        bits: usize,
+    );
         
-    fn bits_to_crt_proof(
+    fn bits_to_crt_check(
         &self, 
         ctx: &mut Context<F>, 
         input: [impl Into<QuantumCell<F>> + Copy;2],
         crt_residues: &Vec<impl Into<QuantumCell<F>> + Copy>, 
         moduli: Vec<AssignedValue<F>>,
         bits: usize,  
-    )-> AssignedValue<F>;
+    );
 }
 
 impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
 
 // we prove the bits-to-crt transformation
 
-    fn bits_to_crt_proof(
+    fn bits_to_crt_check(
         &self, 
         ctx: &mut Context<F>, 
         limbs: [impl Into<QuantumCell<F>> + Copy;2],
         crt_residues: &Vec<impl Into<QuantumCell<F>> + Copy>, 
         moduli: Vec<AssignedValue<F>>,
         bits: usize,
-    ) -> AssignedValue<F>
-    {
-        let numbits = 128;
+    ){
         let result = ctx.load_constant(F::one());
         let mod_res = crt_residues.iter().zip(moduli);
         for (residue, modulus) in mod_res{
-            self.check_less_than(ctx, *residue, modulus, bits);
-            let curr_residue = self.bits_to_residue_proof(ctx, limbs, *residue, modulus, bits);
-            let result = self.gate().and(ctx, curr_residue, result);
+            println!("{:?}, {:?}", Into::<QuantumCell<F>>::into(*residue).value(), modulus.value());
+            self.check_less_than(ctx, Into::<QuantumCell<F>>::into(*residue), modulus, bits);
+            let curr_residue = self.bits_to_residue_find(ctx, limbs, modulus, bits);
+            //constraints computed remainder == provided remainder
+            ctx.assign_region([curr_residue.into(), Constant(F::zero()), Constant(F::zero()), (*residue).into()], [0])
         }
-        result
-
 
     }
 
@@ -93,23 +100,16 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     fn find_pow_two_residue(
         &self,
         ctx: &mut Context<F>,
-        modulus: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>
     {
-        let modulus_bigint = fe_to_biguint(modulus.into().value());
+        let modulus = fe_to_biguint(modulus_assigned.into().value());
         let pow_of_two = pow_of_two();
-        let (div, pow_of_two_rem) = &pow_of_two.div_rem(&modulus_bigint);
-        ctx.assign_region(
-            [Witness(biguint_to_fe(&pow_of_two_rem)), 
-            Constant(biguint_to_fe(&modulus_bigint)), 
-            Witness(biguint_to_fe(div)), 
-            Constant(biguint_to_fe(&pow_of_two))], [0]);
-    
-        let pow_of_two_rem = ctx.get(-4);
+        let (div, pow_of_two_rem) = &pow_of_two.div_rem(&modulus);
+        let pow_of_two_rem = ctx.load_witness(biguint_to_fe(&pow_of_two));
 
         // Constrain that remainder is less than divisor (i.e. `r < b`).
-        self.check_less_than(ctx, pow_of_two_rem, modulus, bits);
         pow_of_two_rem
     }
     
@@ -117,43 +117,58 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
         &self,
         ctx: &mut Context<F>,
         a: impl Into<QuantumCell<F>> + Copy,
-        modulus: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>    {
-        let modulus_bigint = fe_to_biguint(modulus.into().value());
+        let modulus = fe_to_biguint(modulus_assigned.into().value());
         let a_biguint = fe_to_biguint(a.into().value());
-        let (div, a_rem) = &a_biguint.div_rem(&modulus_bigint);
+        let (div, a_rem) = &a_biguint.div_rem(&modulus);
         ctx.assign_region(
             [Witness(biguint_to_fe(&a_rem)), 
-            Constant(biguint_to_fe(&modulus_bigint)), 
+            Constant(biguint_to_fe(&modulus)), 
             Witness(biguint_to_fe(div)), 
             a.into()], [0]);
     
         let a_rem = ctx.get(-4);
 
         // Constrain that remainder is less than divisor (i.e. `r < b`).
-        self.check_less_than(ctx, a_rem, modulus, bits);
+        println!("{:?}, {:?}", a_rem.value(), modulus_assigned.into().value());
+        self.check_less_than(ctx, a_rem, modulus_assigned, 14);
         a_rem
     }
 
-    
-fn bits_to_residue_proof(
+        
+    fn bits_to_residue_find(
+            &self,
+            ctx: &mut Context<F>,
+            [a0, a1]: [impl Into<QuantumCell<F>> + Copy;2],
+            modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+            bits: usize,
+        ) -> AssignedValue<F>
+    {
+        let modulus_biguint = fe_to_biguint(modulus_assigned.into().value());
+        let pow_of_two = pow_of_two();
+        let pow_of_two = self.find_pow_two_residue(ctx, modulus_assigned, bits);
+        let [a0, a1] = [self.find_small_residue(ctx, a0, modulus_assigned, bits), self.find_small_residue(ctx, a1, modulus_assigned, bits)];
+        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, a1, pow_of_two, modulus_assigned);
+        self.gate().crt_lookup_add(ctx, a1_times_pow_of_two, a0, modulus_assigned)
+    }
+
+    fn bits_to_residue_constrain(
         &self,
         ctx: &mut Context<F>,
         [a0, a1]: [impl Into<QuantumCell<F>> + Copy;2],
-        modulus: impl Into<QuantumCell<F>> + Copy,
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         residue: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
-    ) -> AssignedValue<F>
-{
-    let modulus_biguint = fe_to_biguint(modulus.into().value());
-    let pow_of_two = pow_of_two();
-    let (_, a1_times_pow_of_two) = (fe_to_biguint(a1.into().value()) * (&pow_of_two)).div_rem(&modulus_biguint);
-    let a1_times_pow_of_two = ctx.load_witness(biguint_to_fe(&a1_times_pow_of_two));
-    let pow_of_two = self.find_pow_two_residue(ctx, modulus, bits);
-    let [a0, a1] = [self.find_small_residue(ctx, a0, modulus, bits), self.find_small_residue(ctx, a1, modulus, bits)];
-    let check_multiplication = self.gate().crt_lookup_mul(ctx, a1, pow_of_two, a1_times_pow_of_two, &modulus_biguint);
-    let check_addition = self.gate().crt_lookup_add(ctx, a1_times_pow_of_two, a0, residue, &modulus_biguint, modulus);
-    self.gate().and(ctx, check_addition, check_multiplication)
-}
+    ){
+        let modulus_biguint = fe_to_biguint(modulus_assigned.into().value());
+        let pow_of_two = pow_of_two();
+        let pow_of_two = self.find_pow_two_residue(ctx, modulus_assigned, bits);
+        let [a0, a1] = [self.find_small_residue(ctx, a0, modulus_assigned, bits), self.find_small_residue(ctx, a1, modulus_assigned, bits)];
+        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, a1, pow_of_two, modulus_assigned);
+        self.gate().crt_lookup_add_constrain(ctx, a1_times_pow_of_two, a0, residue, modulus_assigned)
+
+    }
+
 }

@@ -98,3 +98,17 @@ pub fn fe_into_crtint_bui_modulus<F:ScalarField>(a: &F, moduli: &Vec<BigUint>) -
     biguint_into_crtint_bui_modulus(a, moduli)
 
 }
+
+
+fn pow_of_two() -> BigUint{
+    use num_traits::One;
+    BigUint::from(std::u128::MAX) + BigUint::one()
+}
+
+pub fn limb_bits_to_crt<F:ScalarField>([a0, a1]: [&F; 2], moduli: &Vec<F>) -> CRTint<F>
+{
+    let (a0, a1) = (fe_to_biguint(a0), fe_to_biguint(a1));
+    let a = a0 + pow_of_two()*a1;
+    biguint_into_crtint_fe_modulus(&a, moduli)
+
+}
