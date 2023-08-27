@@ -85,7 +85,9 @@ The algorithm is realized by the function [**crt_mul**](./src/lib.rs#L57). The i
 5. [**mod_r_mul**](src/multiplication_gates/mod_r_verifications.rs#L4): Checking that $a \cdot b =  q \cdot p + r \mod n$;
 6. [**crt_lookup_division_with_remainder**](src/multiplication_gates/crt_lookup.rs#L131) CRT operations (to simplify the notation, let us fix a modulus $m_i$).
     1. [**crt_lookup_mul**](src/multiplication_gates/crt_lookup.rs#L121) Finding $(a_i,  b_i, a_ib_i )$, $(p_i,  q_i, p_iq_i )$ in the lookup table.
-    2. [**crt_lookup_add**](src/multiplication_gates/crt_lookup.rs#L182) For addition: then checking that $$p_iq_i  + r_i  = (p_iq_i + r_i )_{\mod m_i} $$ for $$p_iq_i + r_i  = (p_iq_i + r_i )_{\mod m_i} + m_i.$$ Note that we verify that $r_i < m_i$ in 6.3.
+    2. [**crt_lookup_add**](src/multiplication_gates/crt_lookup.rs#L182) For addition: then checking that $$p_iq_i  + r_i  = (p_iq_i + r_i )_{\mod m_i} $$ for 
+    $$p_iq_i + r_i  = (p_iq_i + r_i )_{\mod m_i} + m_i.$$ 
+    Note that we verify that $r_i < m_i$ in 6.3.
     3. [**bits_to_crt_check**](src/multiplication_gates/crt_to_bits_proof.rs#79) Proving the CRT-reperesentation: $$(a^0 _{\mod m_i} + a^1 _{\mod m_i} \cdot 2^{128} _{\mod m_i})  \mod m_i = a_i$$ 
     and $a_i < m_i$ , for $a$, $b$, $q$ and $r$.
 
