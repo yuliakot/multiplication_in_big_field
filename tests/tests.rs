@@ -27,34 +27,15 @@ use halo2_base::{
 use itertools::Itertools;
 use num_bigint::BigUint;
 use rand::rngs::OsRng;
-use std::marker::PhantomData;
 
-use serde::{Deserialize, Serialize};
-use ark_std::fs::File;
 use ark_std::env::set_var;
 
-use criterion::{criterion_group, criterion_main};
-use criterion::{BenchmarkId, Criterion};
-
-use big_field_multiplication::crt_mul;
 use big_field_multiplication::crt_int::{CRTint, biguint_into_crtint_bui_modulus, fe_into_crtint, fe_into_crtint_bui_modulus, modulus};
-use big_field_multiplication::crt_int::modulus as find_field_modulus;
-use big_field_multiplication::multiplication_gates::crt_to_bits_proof::{pow_of_two, BITStoCRT};
-
-use ark_std::One;
-
-use halo2_proofs_axiom::halo2curves::FieldExt;
-
-
+use big_field_multiplication::crt_mul;
 use test_case::test_case;
 
+fn find_field_modulus<F: ScalarField>(){
 
-fn read_inputs(i: i32) -> [u64; 2]{
-    let path = format!("tests/tests_input{i}.in");
-    serde_json::from_reader(
-        File::open(path).unwrap_or_else(|e| panic!("")),
-    )
-    .unwrap()
 }
 
 #[test_case(200u64, 300u64)]
@@ -119,6 +100,12 @@ fn test_few_moduli(a: u64, b: u64){
 }
 
 
+fn pow_of_two()-> BigUint
+{
+    BigUint::from(u128::MAX) + BigUint::from(1u128)
+}
+
+
 fn limbs_to_biguint(limbs: [u128; 2])-> BigUint
 {
     BigUint::from(limbs[0]) + BigUint::from(limbs[1])*pow_of_two()
@@ -138,7 +125,7 @@ fn test_big_numbers(limbs_a: [u128; 2], limbs_b: [u128; 2]){
 
     let moduli = &vec![5u64, 6, 11, 13].iter().map(|x| BigUint::from(*x)).collect();
 
-    let p = find_field_modulus::<Fq>();
+    let p = modulus::<Fq>();
     let crt_p = biguint_into_crtint_bui_modulus(&p, moduli);
 
 

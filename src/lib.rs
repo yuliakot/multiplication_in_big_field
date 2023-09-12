@@ -29,7 +29,6 @@ use halo2_base::{
     Context,
     QuantumCell::{self, Constant, Existing, Witness, WitnessFraction},
 };
-use halo2_proofs_axiom::dev::MockProver;
 
 use crate::{crt_int::{CRTint, biguint_into_crtint_fe_modulus}, 
             multiplication_gates::{crt_lookup, crt_to_bits_proof::BITStoCRT},

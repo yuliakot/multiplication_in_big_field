@@ -56,10 +56,10 @@ display = []
 profile = ["halo2_proofs_axiom?/profile"]
 test-utils = ["dep:rand"]
 
-#[[bench]]
-#name = "mul"
-#harness = false
-#
+[[bench]]
+name = "mul"
+harness = false
+
 #[[bench]]
 #name = "inner_product"
 #harness = false
