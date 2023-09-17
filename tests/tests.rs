@@ -48,15 +48,6 @@ use halo2_proofs_axiom::halo2curves::FieldExt;
 
 use test_case::test_case;
 
-
-fn read_inputs(i: i32) -> [u64; 2]{
-    let path = format!("tests/tests_input{i}.in");
-    serde_json::from_reader(
-        File::open(path).unwrap_or_else(|e| panic!("")),
-    )
-    .unwrap()
-}
-
 #[test_case(200u64, 300u64)]
 #[test_case(444u64, 159u64)]
 
@@ -154,3 +145,5 @@ fn test_big_numbers(limbs_a: [u128; 2], limbs_b: [u128; 2]){
 
 }
 
+
+//mod test_counting_cells;

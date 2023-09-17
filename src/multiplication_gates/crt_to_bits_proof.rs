@@ -87,7 +87,6 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
         let result = ctx.load_constant(F::one());
         let mod_res = crt_residues.iter().zip(moduli);
         for (residue, modulus) in mod_res{
-            println!("{:?}, {:?}", Into::<QuantumCell<F>>::into(*residue).value(), modulus.value());
             self.check_less_than(ctx, Into::<QuantumCell<F>>::into(*residue), modulus, bits);
             let curr_residue = self.bits_to_residue_find(ctx, limbs, modulus, bits);
             //constraints computed remainder == provided remainder
@@ -132,7 +131,6 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
         let a_rem = ctx.get(-4);
 
         // Constrain that remainder is less than divisor (i.e. `r < b`).
-        println!("{:?}, {:?}", a_rem.value(), modulus_assigned.into().value());
         self.check_less_than(ctx, a_rem, modulus_assigned, 14);
         a_rem
     }
