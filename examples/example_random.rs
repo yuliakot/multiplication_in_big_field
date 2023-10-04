@@ -56,7 +56,7 @@ fn to_limbs(p: &BigUint) -> [u128; 2]{
 fn random_moduli() -> Vec<u128>{
     let mut ans = vec![];
 
-    for _ in 0..20{
+    for _ in 0..19{
         let mut rng = rand::thread_rng();
         let curr: u128 = rng.gen_range(2..200);
         ans.push(curr);
