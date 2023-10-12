@@ -1,9 +1,11 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
+pub mod utils;
 pub mod multiplication_gates;
 pub mod crt_int;
 pub mod range_checks;
+pub mod loading_tables;
 
 
 use crt_int::biguint_into_crtint_bui_modulus;
@@ -13,6 +15,7 @@ use num_integer::Integer;
 use std::convert::TryInto;
 
 
+use crate::utils::{CQContext, NUMBER_OF_TABLES};
 use multiplication_gates::{mod_r_verifications::*, crt_lookup::CQLookupGateChip};
 use halo2_base::{
     halo2_proofs::halo2curves::bn256::Fr,
@@ -54,9 +57,12 @@ use crate::{crt_int::{CRTint, biguint_into_crtint_fe_modulus},
  }
 
 
+
+
 pub fn crt_mul<F: ScalarField>(
     chip: &RangeChip<F>,
     ctx: &mut Context<F>,
+    cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
     a: &BigUint,
     b: &BigUint,
     crt_p: &CRTint<F>,
@@ -98,6 +104,7 @@ pub fn crt_mul<F: ScalarField>(
         let zipped_inputs = 
         zip_residues_batch([&a,&b, &q], &crt_p, moduli);
 
+        let mut i : u64 = 0; 
         for (curr_inputs, curr_p, curr_modulus) in zipped_inputs.iter()
         {
            let assigned_inputs = ctx.assign_witnesses(*curr_inputs);
@@ -105,13 +112,15 @@ pub fn crt_mul<F: ScalarField>(
            let assigned_inputs: [AssignedValue<F>; 3] = assigned_inputs.try_into().unwrap();
            let curr_modulus_assigned = ctx.load_constant(biguint_to_fe(&curr_modulus));
             
-           let r_residue = chip.gate().crt_lookup_division_with_remainder(ctx, assigned_inputs, assigned_p, curr_modulus_assigned);
+           let r_residue = chip.gate().crt_lookup_division_with_remainder(ctx, cells_to_lookup, assigned_inputs, assigned_p, curr_modulus_assigned, i);
 
            // CRT proof: for each modulus and each number, we check that we picked the right remainder
            for (&limbs, residue) in vec![bits_a, bits_b, bits_q].iter().zip(assigned_inputs){
-               chip.bits_to_residue_constrain(ctx, limbs, curr_modulus_assigned, residue,14);
+               chip.bits_to_residue_constrain(ctx, cells_to_lookup, limbs, curr_modulus_assigned, i, residue,14);
            }
-           chip.bits_to_residue_constrain(ctx, bits_r, curr_modulus_assigned, r_residue,14);
+           chip.bits_to_residue_constrain(ctx, cells_to_lookup, bits_r, curr_modulus_assigned,  i, r_residue,14);
+           i+= 1;
+
         }
         bits_r
     }

@@ -22,6 +22,7 @@ use halo2_base::{
 };
 use num_traits::identities::One;
 use num_integer::Integer;
+use crate::utils::NUMBER_OF_TABLES;
 
 pub fn pow_of_two() -> BigUint{
     BigUint::from(std::u128::MAX) + BigUint::one()
@@ -32,6 +33,7 @@ pub trait BITStoCRT<F: ScalarField> {
     fn find_pow_two_residue(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>;
@@ -39,6 +41,7 @@ pub trait BITStoCRT<F: ScalarField> {
     fn find_small_residue(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         a: impl Into<QuantumCell<F>> + Copy,
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
@@ -47,8 +50,10 @@ pub trait BITStoCRT<F: ScalarField> {
     fn bits_to_residue_find(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         limbs: [impl Into<QuantumCell<F>> + Copy;2],
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64, 
         bits: usize,
     ) -> AssignedValue<F>;
 
@@ -56,8 +61,10 @@ pub trait BITStoCRT<F: ScalarField> {
     fn bits_to_residue_constrain(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         limbs: [impl Into<QuantumCell<F>> + Copy;2],
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64,
         residue: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     );
@@ -65,6 +72,7 @@ pub trait BITStoCRT<F: ScalarField> {
     fn bits_to_crt_check(
         &self, 
         ctx: &mut Context<F>, 
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         input: [impl Into<QuantumCell<F>> + Copy;2],
         crt_residues: &Vec<impl Into<QuantumCell<F>> + Copy>, 
         moduli: Vec<AssignedValue<F>>,
@@ -79,6 +87,7 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     fn bits_to_crt_check(
         &self, 
         ctx: &mut Context<F>, 
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         limbs: [impl Into<QuantumCell<F>> + Copy;2],
         crt_residues: &Vec<impl Into<QuantumCell<F>> + Copy>, 
         moduli: Vec<AssignedValue<F>>,
@@ -86,9 +95,11 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     ){
         let result = ctx.load_constant(F::one());
         let mod_res = crt_residues.iter().zip(moduli);
+        let mut table_label = 0;
         for (residue, modulus) in mod_res{
             self.check_less_than(ctx, Into::<QuantumCell<F>>::into(*residue), modulus, bits);
-            let curr_residue = self.bits_to_residue_find(ctx, limbs, modulus, bits);
+            let curr_residue = self.bits_to_residue_find(ctx, cells_to_lookup, limbs, modulus, table_label, bits);
+            table_label+=1;
             //constraints computed remainder == provided remainder
             ctx.assign_region([curr_residue.into(), Constant(F::zero()), Constant(F::zero()), (*residue).into()], [0])
         }
@@ -99,6 +110,7 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     fn find_pow_two_residue(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ) -> AssignedValue<F>
@@ -115,6 +127,7 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     fn find_small_residue(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         a: impl Into<QuantumCell<F>> + Copy,
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
@@ -139,32 +152,36 @@ impl<F:ScalarField> BITStoCRT<F> for RangeChip<F> {
     fn bits_to_residue_find(
             &self,
             ctx: &mut Context<F>,
+            cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
             [a0, a1]: [impl Into<QuantumCell<F>> + Copy;2],
             modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+            table_label: u64,
             bits: usize,
         ) -> AssignedValue<F>
     {
         let modulus_biguint = fe_to_biguint(modulus_assigned.into().value());
         let pow_of_two = pow_of_two();
-        let pow_of_two = self.find_pow_two_residue(ctx, modulus_assigned, bits);
-        let [a0, a1] = [self.find_small_residue(ctx, a0, modulus_assigned, bits), self.find_small_residue(ctx, a1, modulus_assigned, bits)];
-        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, a1, pow_of_two, modulus_assigned);
+        let pow_of_two = self.find_pow_two_residue(ctx, cells_to_lookup,  modulus_assigned, bits);
+        let [a0, a1] = [self.find_small_residue(ctx, cells_to_lookup, a0, modulus_assigned, bits), self.find_small_residue(ctx, cells_to_lookup ,a1, modulus_assigned, bits)];
+        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, cells_to_lookup, a1, pow_of_two, modulus_assigned, table_label);
         self.gate().crt_lookup_add(ctx, a1_times_pow_of_two, a0, modulus_assigned)
     }
 
     fn bits_to_residue_constrain(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         [a0, a1]: [impl Into<QuantumCell<F>> + Copy;2],
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64,
         residue: impl Into<QuantumCell<F>> + Copy,
         bits: usize,
     ){
         let modulus_biguint = fe_to_biguint(modulus_assigned.into().value());
         let pow_of_two = pow_of_two();
-        let pow_of_two = self.find_pow_two_residue(ctx, modulus_assigned, bits);
-        let [a0, a1] = [self.find_small_residue(ctx, a0, modulus_assigned, bits), self.find_small_residue(ctx, a1, modulus_assigned, bits)];
-        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, a1, pow_of_two, modulus_assigned);
+        let pow_of_two = self.find_pow_two_residue(ctx, cells_to_lookup, modulus_assigned, bits);
+        let [a0, a1] = [self.find_small_residue(ctx, cells_to_lookup, a0, modulus_assigned, bits), self.find_small_residue(ctx, cells_to_lookup, a1, modulus_assigned, bits)];
+        let a1_times_pow_of_two = self.gate().crt_lookup_mul(ctx, cells_to_lookup, a1, pow_of_two, modulus_assigned, table_label);
         self.gate().crt_lookup_add_constrain(ctx, a1_times_pow_of_two, a0, residue, modulus_assigned)
 
     }

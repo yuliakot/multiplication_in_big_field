@@ -3,6 +3,7 @@ use halo2_proofs_axiom::dev::metadata::Gate;
 use halo2_base::utils::fe_to_biguint ;
 use num_bigint::BigUint;
 use num_integer::Integer;
+use crate::utils::NUMBER_OF_TABLES;
 
 
 
@@ -21,18 +22,22 @@ pub trait CQLookupGateChip<F: ScalarField>{
     fn crt_lookup_mul(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         a: impl Into<QuantumCell<F>> + Copy,
         b: impl Into<QuantumCell<F>> + Copy,
-        modulus_assigned: impl Into<QuantumCell<F>> + Copy,) -> AssignedValue<F>
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64, // is probably the same number as modulus_assigned...
+    ) -> AssignedValue<F>
     {
-            //unimplemented!()
-            //for now doesn't constrain anything 
-            //for testing purposes   
-            let modulus = fe_to_biguint(modulus_assigned.into().value());
-            let a_bui = fe_to_biguint(a.into().value());
-            let b_bui = fe_to_biguint(b.into().value());
+            let modulus = &fe_to_biguint(modulus_assigned.into().value());
+            let a_bui = &fe_to_biguint(a.into().value());
+            let b_bui = &fe_to_biguint(b.into().value());
             let a_times_b = &(a_bui*b_bui).div_rem(&modulus).1;
-            ctx.load_witness(biguint_to_fe(a_times_b))
+            
+            let to_lookup = a_bui.clone() + b_bui.clone()*modulus.clone() + a_times_b.clone()*modulus.clone() * modulus.clone();
+
+            let a_times_b = ctx.load_witness(biguint_to_fe(a_times_b));
+            a_times_b
         }
 
 
@@ -59,9 +64,11 @@ pub trait CQLookupGateChip<F: ScalarField>{
     fn crt_lookup_division_with_remainder(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         inputs : [impl Into<QuantumCell<F>> + Copy; 3],
         p: impl Into<QuantumCell<F>> + Copy,
         modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64,
     ) -> AssignedValue<F>;
 }
 
@@ -73,9 +80,6 @@ impl<F: ScalarField> CQLookupGateChip<F> for GateChip<F>{
             a: impl Into<QuantumCell<F>> + Copy,
             modulus_assigned: impl Into<QuantumCell<F>> + Copy,) -> AssignedValue<F>
         {
-            //unimplemented!()
-            //for now doesn't constrain anything 
-            //for testing purposes
             self.sub(ctx, modulus_assigned, a)
         }
 
@@ -131,16 +135,20 @@ impl<F: ScalarField> CQLookupGateChip<F> for GateChip<F>{
     fn crt_lookup_division_with_remainder(
         &self,
         ctx: &mut Context<F>,
+        cells_to_lookup: &mut [Vec<F>; NUMBER_OF_TABLES],
         [a,
         b, 
         q] : [impl Into<QuantumCell<F>> + Copy; 3],
         p: impl Into<QuantumCell<F>> + Copy,
-        modulus_assigned: impl Into<QuantumCell<F>> + Copy,) -> AssignedValue<F>
+        modulus_assigned: impl Into<QuantumCell<F>> + Copy,
+        table_label: u64,
+    
+    ) -> AssignedValue<F>
     {
         let moduls = fe_to_biguint(modulus_assigned.into().value());
 
-        let a_times_b = self.crt_lookup_mul(ctx, a, b, modulus_assigned);
-        let p_times_q = self.crt_lookup_mul(ctx, p, q, modulus_assigned);
+        let a_times_b = self.crt_lookup_mul(ctx, cells_to_lookup, a, b, modulus_assigned, table_label);
+        let p_times_q = self.crt_lookup_mul(ctx, cells_to_lookup, p, q, modulus_assigned, table_label);
         let p_times_q_neg = self.crt_neg(ctx, p_times_q, modulus_assigned);
         self.crt_lookup_add(ctx, a_times_b, p_times_q_neg, modulus_assigned)
     }

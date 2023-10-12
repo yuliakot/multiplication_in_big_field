@@ -25,6 +25,11 @@ use big_field_multiplication::crt_mul;
 use big_field_multiplication::crt_int::biguint_into_crtint_bui_modulus;
 use big_field_multiplication::crt_int::modulus as find_field_modulus;
 use big_field_multiplication::multiplication_gates::crt_to_bits_proof::pow_of_two;
+use big_field_multiplication::loading_tables::{
+    generate_tables::gen_table_multiplication,
+    load_tables::*,
+};
+use big_field_multiplication::utils::NUMBER_OF_TABLES;
 
 use ark_std::{Zero, One};
 
@@ -32,6 +37,10 @@ use halo2_proofs_axiom::halo2curves::FieldExt;
 
 
 use rand::Rng;
+
+fn generate_tables(){
+
+}
 
 
 fn limbs_to_biguint(limbs: [u128; 2])-> BigUint
@@ -73,6 +82,8 @@ fn main(){
     set_var("LOOKUP_BITS", lookup_bits.to_string());
     let ctx = builder.main(0);
 
+    let mut cells_to_lookup = [vec![], vec![], vec![], vec![]];
+
     let moduli = &random_moduli().iter().map(|x| BigUint::from(*x)).collect();
 
     let p = find_field_modulus::<Fq>();
@@ -91,7 +102,7 @@ fn main(){
     assert!(&a < &p);
     assert!(&b < &p);
 
-    let res = crt_mul(&chip, ctx, &a, &b, &crt_p, moduli);
+    let res = crt_mul(&chip, ctx, &mut cells_to_lookup, &a, &b, &crt_p, moduli);
     let true_res: [Fr; 2] = to_limbs(&(a*b).div_rem(&p).1).map(|x| biguint_to_fe(&BigUint::from(x)));
 
     assert!(res[0].value() == &true_res[0]);

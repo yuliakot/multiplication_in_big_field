@@ -1,6 +1,5 @@
 use super::*;
 
-use serde::{Deserialize, Serialize};
 use ark_std::fs::File;
 use test_case::test_case;
 use num_bigint::BigUint;
@@ -14,6 +13,7 @@ use super::crt_lookup::CQLookupGateChip;
 use num_integer::Integer;
 
 use crate::crt_int::limb_bits_to_crt;
+use crate::utils::NUMBER_OF_TABLES;
 
 use halo2_base::halo2_proofs::dev::MockProver;
 
@@ -132,7 +132,14 @@ fn test_crt_to_bits(inputs: [Fr; 2], moduli: [Fr; 5]){
 
     let twelve = ctx.load_witness(Fr::from(18));
     let m = ctx.load_witness(Fr::from(21));
-    chip.bits_to_crt_check(ctx, assigned_inputs, &assigned_residues,assigned_moduli, 9);
+
+    let mut cells_to_lookup = vec![];
+    for _ in 0..NUMBER_OF_TABLES{
+        cells_to_lookup.push(vec![]);
+    }    
+    let mut cells_to_lookup = cells_to_lookup.try_into().unwrap();
+
+    chip.bits_to_crt_check(ctx, &mut cells_to_lookup, assigned_inputs, &assigned_residues,assigned_moduli, 9);
 
     
     builder.config(k, Some(9));

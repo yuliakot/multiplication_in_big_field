@@ -68,7 +68,8 @@ fn test_more_moduli(a: u64, b: u64){
 
     let [a, b] = [a, b].map(BigUint::from);
 
-    let res = crt_mul(&chip, ctx, &a, &b, &crt_p, moduli);
+    let mut cells_to_lookup = [vec![], vec![], vec![], vec![]];
+    let res = crt_mul(&chip, ctx, &mut cells_to_lookup, &a, &b, &crt_p, moduli);
 
     builder.config(k, Some(9));
 
@@ -98,7 +99,10 @@ fn test_few_moduli(a: u64, b: u64){
 
     let [a, b] = [a, b].map(BigUint::from);
 
-    let res = crt_mul::<Fr>(&chip, ctx, &a, &b, &crt_p, &moduli);
+
+    let mut cells_to_lookup = [vec![], vec![], vec![], vec![]];
+    let res = crt_mul(&chip, ctx, &mut cells_to_lookup, &a, &b, &crt_p, &moduli);
+
 
     builder.config(k, Some(9));
 
@@ -134,8 +138,10 @@ fn test_big_numbers(limbs_a: [u128; 2], limbs_b: [u128; 2]){
 
 
     let [a, b] = [limbs_a, limbs_b].map(limbs_to_biguint);
+    
+    let mut cells_to_lookup = [vec![], vec![], vec![], vec![]];
+    let res = crt_mul(&chip, ctx, &mut cells_to_lookup, &a, &b, &crt_p, &moduli);
 
-    let res = crt_mul(&chip, ctx, &a, &b, &crt_p, moduli);
     
     builder.config(k, Some(9));
 
